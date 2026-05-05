@@ -248,10 +248,15 @@ public class FileDownloadService {
     }
 
     /**
-     * 轻量校验当前请求是否有权访问网络文件。
+     * 解决的问题：
+     * - 同一个网络文件 URL 已经被缓存后，后续请求如果没有重新做访问校验，可能会直接复用缓存结果，从而绕过当前请求的权限检查。
      *
-     * 在命中本地缓存前执行，避免“已有缓存但当前请求无权限”时直接复用缓存结果。
-     * 目前仅对 HTTP/HTTPS 执行远端校验；其他协议保持现有行为。
+     * 适用场景：
+     * - 网络文件预览命中本地缓存前的访问资格校验
+     * - 只有当前请求携带了可用透传鉴权上下文时才调用
+     *
+     * 范围：
+     * - 目前仅对 HTTP/HTTPS 执行远端校验，其他协议保持现有行为不额外探测
      */
     public void verifyNetworkFileAccess(String fileUrl, int timeout,
                                         DownloadRequestAuthContext authContext) {

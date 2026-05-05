@@ -323,11 +323,15 @@ public class FilePreviewService {
                 request.setFileId(fileId);
             }
 
-            // 4. 在命中本地缓存前，先校验当前请求是否仍有权访问原始网络文件
-            fileDownloadService.verifyNetworkFileAccess(
-                    networkFileUrl,
-                    request.getDownloadTimeout(),
-                    request.getDownloadRequestAuthContext());
+            // 4. 仅在当前请求携带了可用的透传鉴权上下文时，才在命中本地缓存前做访问校验。
+            // 未开启 auth-forward 或未解析出鉴权信息时，不做这一步匿名探测，避免误伤公开文件或无意义校验。
+            if (request.getDownloadRequestAuthContext() != null
+                    && !request.getDownloadRequestAuthContext().hasNoForwardedAuth()) {
+                fileDownloadService.verifyNetworkFileAccess(
+                        networkFileUrl,
+                        request.getDownloadTimeout(),
+                        request.getDownloadRequestAuthContext());
+            }
 
             // 5. 检查缓存（如果不需要强制重新生成）
             if (!request.isForceRegenerate()) {
